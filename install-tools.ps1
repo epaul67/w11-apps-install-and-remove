@@ -96,34 +96,34 @@ function Uninstall-Package {
         [Parameter(Mandatory=$true)][pscustomobject]$Pkg
     )
 
-    # If winget list returns an MSIX\Appx identity, use Appx removal instead of winget uninstall
+    # MSIX/Appx uninstall path
     if (-not [string]::IsNullOrWhiteSpace($Pkg.Id) -and $Pkg.Id -like "MSIX\*") {
-        # Try to extract the real package name: "Microsoft.XboxIdentityProvider_..."
-        $msix = $Pkg.Id.Substring(5)   # drop "MSIX\"
-        $packageName = ($msix -split "\s+")[0]  # stop at whitespace if any
+        $msix = $Pkg.Id.Substring(5)              # drop "MSIX\"
+        $packageName = ($msix -split "\s+")[0]    # stop at whitespace if any
 
         Write-Host "Uninstalling MSIX/Appx: $($Pkg.Name) ($packageName)" -ForegroundColor Magenta
 
-        # Remove for current user
-        $found = Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue
-        if ($found) {
-            $found | Remove-AppxPackage -ErrorAction SilentlyContinue
-        } else {
-            Write-Host "Appx package not found for current user (may already be removed)." -ForegroundColor DarkGray
-        }
+        try {
+            # Remove for current user
+            $found = Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue
+            if ($found) {
+                $found | Remove-AppxPackage -ErrorAction SilentlyContinue
+            } else {
+                Write-Host "Appx package not found for current user (may already be removed)." -ForegroundColor DarkGray
+            }
 
-        # OPTIONAL: deprovision so it won't be installed for NEW users on this machine
-        # (Works for many built-in apps)
-        $prov = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $packageName }
-        if ($prov) {
-            Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName -ErrorAction SilentlyContinue | Out-Null
-            Write-Host "Deprovisioned for new users." -ForegroundColor DarkGray
+            # Deprovision for new users (optional)
+            $prov = Get-AppxProvisionedPackage -Online | Where-Object { $_.DisplayName -eq $packageName }
+            if ($prov) {
+                Remove-AppxProvisionedPackage -Online -PackageName $prov.PackageName -ErrorAction SilentlyContinue | Out-Null
+                Write-Host "Deprovisioned for new users." -ForegroundColor DarkGray
             }
 
             Write-Host "OK: removed (MSIX/Appx) $($Pkg.Name)" -ForegroundColor Green
             Write-Host ""
             return $true
-        } catch {
+        }
+        catch {
             Write-Host "FAILED: MSIX/Appx removal for $($Pkg.Name): $($_.Exception.Message)" -ForegroundColor Red
             Write-Host ""
             return $false
@@ -132,13 +132,13 @@ function Uninstall-Package {
 
     # Normal winget uninstall path
     if (-not [string]::IsNullOrWhiteSpace($Pkg.Id)) {
-        $args = @("uninstall","--id",$Pkg.Id,"--exact","--accept-source-agreements","--silent")
+        $wgArgs = @("uninstall","--id",$Pkg.Id,"--exact","--accept-source-agreements","--silent","--source","winget")
         Write-Host "Uninstalling: $($Pkg.Name) ($($Pkg.Id))" -ForegroundColor Magenta
-        $ok = Invoke-WinGet -Args $args -ActionLabel ("Uninstall " + $Pkg.Name)
+        $ok = Invoke-WinGet -Args $wgArgs -ActionLabel ("Uninstall " + $Pkg.Name)
     } else {
-        $args = @("uninstall","--name",$Pkg.Name,"--exact","--accept-source-agreements","--silent")
+        $wgArgs = @("uninstall","--name",$Pkg.Name,"--exact","--accept-source-agreements","--silent","--source","winget")
         Write-Host "Uninstalling by name (no Id): $($Pkg.Name)" -ForegroundColor Magenta
-        $ok = Invoke-WinGet -Args $args -ActionLabel ("Uninstall " + $Pkg.Name)
+        $ok = Invoke-WinGet -Args $wgArgs -ActionLabel ("Uninstall " + $Pkg.Name)
     }
 
     if ($ok) {
@@ -149,6 +149,7 @@ function Uninstall-Package {
     Write-Host ""
     return $ok
 }
+
 
 function Show-Menu {
     param(
