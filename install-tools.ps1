@@ -39,8 +39,8 @@ function Repair-WinGetSources {
 
 function Invoke-WinGet {
     param(
-        [Parameter(Mandatory=$true)][string[]]$Args,
-        [Parameter(Mandatory=$true)][string]$ActionLabel
+        [Parameter(Mandatory = $true)][string[]]$Args,
+        [Parameter(Mandatory = $true)][string]$ActionLabel
     )
 
     & winget @Args
@@ -63,8 +63,8 @@ function Invoke-WinGet {
 
 function Install-App {
     param(
-        [Parameter(Mandatory=$true)][string]$Id,
-        [Parameter(Mandatory=$true)][string]$Name,
+        [Parameter(Mandatory = $true)][string]$Id,
+        [Parameter(Mandatory = $true)][string]$Name,
         [string]$Scope = ""   # "machine" or ""
     )
 
@@ -84,7 +84,8 @@ function Install-App {
 
     if ($ok) {
         Write-Host "OK: $Name" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "FAILED: $Name" -ForegroundColor Red
     }
     Write-Host ""
@@ -93,7 +94,7 @@ function Install-App {
 
 function Uninstall-Package {
     param(
-        [Parameter(Mandatory=$true)][pscustomobject]$Pkg
+        [Parameter(Mandatory = $true)][pscustomobject]$Pkg
     )
 
     # MSIX/Appx uninstall path
@@ -108,7 +109,8 @@ function Uninstall-Package {
             $found = Get-AppxPackage -Name $packageName -ErrorAction SilentlyContinue
             if ($found) {
                 $found | Remove-AppxPackage -ErrorAction SilentlyContinue
-            } else {
+            }
+            else {
                 Write-Host "Appx package not found for current user (may already be removed)." -ForegroundColor DarkGray
             }
 
@@ -132,18 +134,20 @@ function Uninstall-Package {
 
     # Normal winget uninstall path
     if (-not [string]::IsNullOrWhiteSpace($Pkg.Id)) {
-        $wgArgs = @("uninstall","--id",$Pkg.Id,"--exact","--accept-source-agreements","--silent","--source","winget")
+        $wgArgs = @("uninstall", "--id", $Pkg.Id, "--exact", "--accept-source-agreements", "--silent", "--source", "winget")
         Write-Host "Uninstalling: $($Pkg.Name) ($($Pkg.Id))" -ForegroundColor Magenta
         $ok = Invoke-WinGet -Args $wgArgs -ActionLabel ("Uninstall " + $Pkg.Name)
-    } else {
-        $wgArgs = @("uninstall","--name",$Pkg.Name,"--exact","--accept-source-agreements","--silent","--source","winget")
+    }
+    else {
+        $wgArgs = @("uninstall", "--name", $Pkg.Name, "--exact", "--accept-source-agreements", "--silent", "--source", "winget")
         Write-Host "Uninstalling by name (no Id): $($Pkg.Name)" -ForegroundColor Magenta
         $ok = Invoke-WinGet -Args $wgArgs -ActionLabel ("Uninstall " + $Pkg.Name)
     }
 
     if ($ok) {
         Write-Host "OK: removed $($Pkg.Name)" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "FAILED: $($Pkg.Name)" -ForegroundColor Red
     }
     Write-Host ""
@@ -153,8 +157,8 @@ function Uninstall-Package {
 
 function Show-Menu {
     param(
-        [Parameter(Mandatory=$true)][string]$Title,
-        [Parameter(Mandatory=$true)][object[]]$Items
+        [Parameter(Mandatory = $true)][string]$Title,
+        [Parameter(Mandatory = $true)][object[]]$Items
     )
 
     Write-Host ""
@@ -173,7 +177,7 @@ function Show-Menu {
 function Parse-Selection {
     param(
         [string]$Selection,
-        [Parameter(Mandatory=$true)][int]$Max
+        [Parameter(Mandatory = $true)][int]$Max
     )
 
     if ([string]::IsNullOrWhiteSpace($Selection)) { return @() }
@@ -227,7 +231,8 @@ function Get-WinGetInstalledPackages {
             }
             return $pkgs
         }
-    } catch { }
+    }
+    catch { }
 
     # Fallback: parse plain 'winget list' output
     try {
@@ -250,9 +255,9 @@ function Get-WinGetInstalledPackages {
             $cols = ($line -split "\s{2,}") | Where-Object { $_ -ne "" }
 
             $name = if ($cols.Count -ge 1) { $cols[0] } else { "" }
-            $id   = if ($cols.Count -ge 2) { $cols[1] } else { "" }
-            $ver  = if ($cols.Count -ge 3) { $cols[2] } else { "" }
-            $src  = if ($cols.Count -ge 5) { $cols[4] } else { "" }
+            $id = if ($cols.Count -ge 2) { $cols[1] } else { "" }
+            $ver = if ($cols.Count -ge 3) { $cols[2] } else { "" }
+            $src = if ($cols.Count -ge 5) { $cols[4] } else { "" }
 
             if (-not [string]::IsNullOrWhiteSpace($name)) {
                 $pkgs += [pscustomobject]@{
@@ -265,7 +270,8 @@ function Get-WinGetInstalledPackages {
         }
 
         return $pkgs
-    } catch {
+    }
+    catch {
         return @()
     }
 }
@@ -283,7 +289,8 @@ function Upgrade-All {
     $ok = Invoke-WinGet -Args $args -ActionLabel "Upgrade all"
     if ($ok) {
         Write-Host "OK: winget upgrade --all completed." -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "WARNING: winget upgrade --all failed." -ForegroundColor Yellow
     }
     Write-Host ""
@@ -292,25 +299,25 @@ function Upgrade-All {
 
 # --- Your install catalog (edit/add apps here) ---
 $Apps = @(
-    [pscustomobject]@{ Name="Google Chrome";              Id="Google.Chrome";                       Scope="machine" },
-    [pscustomobject]@{ Name="Google Credential Provider"; Id="Google.CredentialProviderForWindows"; Scope="" },
-    [pscustomobject]@{ Name="Notepad++";                  Id="Notepad++.Notepad++";                 Scope="" },
-    [pscustomobject]@{ Name="Viscosity";                  Id="SparkLabs.Viscosity";                 Scope="" },
-    [pscustomobject]@{ Name="Visual Studio Code";         Id="Microsoft.VisualStudioCode";          Scope="" },
-    [pscustomobject]@{ Name="PuTTY";                      Id="PuTTY.PuTTY";                         Scope="" },
-    [pscustomobject]@{ Name="Git";                        Id="Git.Git";                             Scope="" },
-    [pscustomobject]@{ Name="Google Drive";               Id="Google.GoogleDrive";                  Scope="" },
-    [pscustomobject]@{ Name="Citrix Workspace";           Id="Citrix.Workspace";                    Scope="" },
-    [pscustomobject]@{ Name="Sourcetree";                 Id="Atlassian.Sourcetree";                Scope="" },
-    [pscustomobject]@{ Name="WSL";                        Id="Microsoft.WSL";                       Scope="" },
-    [pscustomobject]@{ Name="Docker Desktop";             Id="Docker.DockerDesktop";                Scope="machine" }
+    [pscustomobject]@{ Name = "Google Chrome"; Id = "Google.Chrome"; Scope = "machine" },
+    [pscustomobject]@{ Name = "Google Credential Provider"; Id = "Google.CredentialProviderForWindows"; Scope = "" },
+    [pscustomobject]@{ Name = "Notepad++"; Id = "Notepad++.Notepad++"; Scope = "" },
+    [pscustomobject]@{ Name = "Viscosity"; Id = "SparkLabs.Viscosity"; Scope = "" },
+    [pscustomobject]@{ Name = "Visual Studio Code"; Id = "Microsoft.VisualStudioCode"; Scope = "" },
+    [pscustomobject]@{ Name = "PuTTY"; Id = "PuTTY.PuTTY"; Scope = "" },
+    [pscustomobject]@{ Name = "Git"; Id = "Git.Git"; Scope = "" },
+    [pscustomobject]@{ Name = "Google Drive"; Id = "Google.GoogleDrive"; Scope = "" },
+    [pscustomobject]@{ Name = "Citrix Workspace"; Id = "Citrix.Workspace"; Scope = "" },
+    [pscustomobject]@{ Name = "Sourcetree"; Id = "Atlassian.Sourcetree"; Scope = "" },
+    [pscustomobject]@{ Name = "WSL"; Id = "Microsoft.WSL"; Scope = "" },
+    [pscustomobject]@{ Name = "Docker Desktop"; Id = "Docker.DockerDesktop"; Scope = "machine" }
 )
 
 # --- Main ---
 Ensure-WinGet
 
 $FailedUninstalls = New-Object System.Collections.Generic.List[string]
-$FailedInstalls   = New-Object System.Collections.Generic.List[string]
+$FailedInstalls = New-Object System.Collections.Generic.List[string]
 
 # 1) Optional uninstall of ALL winget-detected apps
 $AllInstalled = Get-WinGetInstalledPackages | Sort-Object Name
@@ -329,7 +336,7 @@ if ($AllInstalled.Count -gt 0) {
         $MenuItems = @()
         foreach ($p in $AllInstalled) {
             $v = if ([string]::IsNullOrWhiteSpace($p.Version)) { "?" } else { $p.Version }
-            $s = if ([string]::IsNullOrWhiteSpace($p.Source))  { "" } else { " [" + $p.Source + "]" }
+            $s = if ([string]::IsNullOrWhiteSpace($p.Source)) { "" } else { " [" + $p.Source + "]" }
             $MenuItems += [pscustomobject]@{
                 Name = ($p.Name + " (v" + $v + ")" + $s)
                 _raw = $p
@@ -344,24 +351,27 @@ if ($AllInstalled.Count -gt 0) {
 
             if ($uIdx.Count -eq 0) {
                 Write-Host ("No valid selection. Valid range is 1..{0}." -f $MenuItems.Count) -ForegroundColor Yellow
-            } else {
+            }
+            else {
                 Write-Host ""
                 Write-Host "Will uninstall:" -ForegroundColor White
-                foreach ($idx in $uIdx) { Write-Host (" - " + $MenuItems[$idx-1].Name) }
+                foreach ($idx in $uIdx) { Write-Host (" - " + $MenuItems[$idx - 1].Name) }
                 Write-Host ""
 
                 foreach ($idx in $uIdx) {
-                    $pkg = $MenuItems[$idx-1]._raw
+                    $pkg = $MenuItems[$idx - 1]._raw
                     $ok = $false
                     try { $ok = Uninstall-Package -Pkg $pkg } catch { $ok = $false }
                     if (-not $ok) { $FailedUninstalls.Add($pkg.Name) | Out-Null }
                 }
             }
         }
-    } else {
+    }
+    else {
         Write-Host "No matches for that filter. Skipping uninstall step." -ForegroundColor Yellow
     }
-} else {
+}
+else {
     Write-Host "No winget-detected installed apps found (or output could not be parsed)." -ForegroundColor Yellow
 }
 
@@ -377,11 +387,11 @@ if ($iIdx.Count -eq 0) {
 
 Write-Host ""
 Write-Host "Will install:" -ForegroundColor White
-foreach ($idx in $iIdx) { Write-Host (" - " + $Apps[$idx-1].Name) }
+foreach ($idx in $iIdx) { Write-Host (" - " + $Apps[$idx - 1].Name) }
 Write-Host ""
 
 foreach ($idx in $iIdx) {
-    $app = $Apps[$idx-1]
+    $app = $Apps[$idx - 1]
     $ok = $false
     try { $ok = Install-App -Id $app.Id -Name $app.Name -Scope $app.Scope } catch { $ok = $false }
     if (-not $ok) { $FailedInstalls.Add($app.Name) | Out-Null }
@@ -395,14 +405,16 @@ Write-Host "========== SUMMARY ==========" -ForegroundColor White
 if ($FailedUninstalls.Count -gt 0) {
     Write-Host "Uninstall failures:" -ForegroundColor Yellow
     $FailedUninstalls | Sort-Object | ForEach-Object { Write-Host (" - " + $_) -ForegroundColor Yellow }
-} else {
+}
+else {
     Write-Host "Uninstall failures: none" -ForegroundColor Green
 }
 
 if ($FailedInstalls.Count -gt 0) {
     Write-Host "Install failures:" -ForegroundColor Yellow
     $FailedInstalls | Sort-Object | ForEach-Object { Write-Host (" - " + $_) -ForegroundColor Yellow }
-} else {
+}
+else {
     Write-Host "Install failures: none" -ForegroundColor Green
 }
 
