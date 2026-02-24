@@ -44,3 +44,5 @@ Verify WinGet availability:
 
 ```powershell
 winget --version
+
+If not available, install App Installer from Microsoft Store.
