@@ -46,3 +46,16 @@ Verify WinGet availability:
 winget --version
 
 If not available, install App Installer from Microsoft Store.
+Execution
+Recommended Method
+
+Run: </>cmd
+
+run-install.cmd
+
+This automatically bypasses PowerShell execution restrictions for the session.
+
+Manual Execution
+</>PowerShell
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\install-tools.ps1
