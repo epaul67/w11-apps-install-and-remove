@@ -47,7 +47,7 @@ winget --version
 
 If not available, install App Installer from Microsoft Store.
 Execution
-Recommended Method
+## Recommended Method
 
 Run: </>cmd
 
